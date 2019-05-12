@@ -13,7 +13,7 @@ jsonSave = r'save.json'
 
 with open(jsonFile1,'r',encoding='utf-8')as f1:    
     dic1 = json.load(f1)
-with open(jsonFile2,'r',encoding='gbk')as f2:    
+with open(jsonFile2,'r',encoding='utf-8')as f2:
     dic2 = json.load(f2)
 
 #print(len(dic2))

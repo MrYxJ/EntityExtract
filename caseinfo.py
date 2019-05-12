@@ -168,15 +168,15 @@ class EntityExtraction():
         self.dict['LASJ'] = self.test_task(self.extract_lasj, 'extract_lasj')
 
      # MrYx
-     #    self.dict['PJSJ'] = self.test_task2(self.extract_pjsj, 'extract_pjsj')
-     #    self.dict['SADQ'] = self.test_task2(self.extract_sadq, 'extract_sadq')
-     #    self.dict['SASJ'] = self.test_task2(self.extract_sasj, 'extract_sasj')
-     #    self.dict['SAJE'] = self.test_task2(self.extract_saje, 'extract_saje')
+        self.dict['PJSJ'] = self.test_task2(self.extract_pjsj, 'extract_pjsj')
+        self.dict['SADQ'] = self.test_task2(self.extract_sadq, 'extract_sadq')
+        self.dict['SASJ'] = self.test_task2(self.extract_sasj, 'extract_sasj')
+        self.dict['SAJE'] = self.test_task2(self.extract_saje, 'extract_saje')
 
         caseinfo = {}
-        # dict_key_order = ['PJSJ','SADQ', 'SASJ', 'SAJE']
 
-        dict_key_order = ['AJXZ', 'AJLX', 'TOP_UNITCODE', 'UNITCODE', 'HYLY_XH', 'HYLY_SH', 'SAHJ', 'AFCS', 'LASJ']
+        dict_key_order = ['AJXZ', 'AJLX', 'TOP_UNITCODE', 'UNITCODE', 'HYLY_XH', 'HYLY_SH', 'SAHJ', 'AFCS', 'LASJ',
+                          'PJSJ','SADQ', 'SASJ', 'SAJE']
 
         cnt = 2
         for i in range(len(self.all_items)):
@@ -396,12 +396,6 @@ class EntityExtraction():
         return content
 
     def extract_sadq(self, content, id):
-        """
-        先用区|县|旗|州|省，再用jieba分地名
-        :param content:
-        :param id:
-        :return:
-        """
         retList = []
         contentList = [content]
         szdq = cpca.transform(contentList)
@@ -494,11 +488,3 @@ class EntityExtraction():
 if __name__ == '__main__':
     ee = EntityExtraction()
     ee.test_total()
-
-    # cont = '五指山市人民法院'
-    # print('ok???')
-    # ee.extract_sadq(cont,1)
-    #ee.test_task2(ee.extract_sasj, 'extract_saje')
-    #ee.test_task2(ee.extract_sadq,'extract_sadq')
-
-    # ee.test_method()
