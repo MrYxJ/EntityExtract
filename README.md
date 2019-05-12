@@ -19,6 +19,16 @@ json格式：
       "caseinfo": {
       }
    },
+   "3": {
+      "personinfo": [
+         {
+           
+         }
+      ],
+      "caseinfo": {
+      }
+   },
+   .....
 }
 ```
 
