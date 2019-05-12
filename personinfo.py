@@ -18,7 +18,7 @@ class EntityExtraction():
         '''
         这里analys_pos定义每个抽取任务从excel的哪个部分抽取
         '''
-        self.input_file = r'D:\桌面文件\OpenLaw判决书.xlsx'
+        self.input_file = r'OpenLaw判决书.xlsx'
         self.all_items = self.xlsx_to_dict(self.input_file)
         self.analys_pos = {
             'extract_ajxz': ['案由'],   #可能从多个不同部分提取，所以用List
