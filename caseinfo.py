@@ -25,7 +25,7 @@ class EntityExtraction():
             'extract_hyly': ['案由', '庭审过程'],
             'extract_sahj': ['庭审过程'],
             'extract_afcs': ['庭审过程'],
-            'extract_lasj': ['庭审过程']
+            'extract_lasj': ['庭审过程'],
             'extract_pjsj':['判决日期'],
             'extract_sadq':['法院'],
             'extract_sasj':['庭审过程'],
@@ -74,7 +74,7 @@ class EntityExtraction():
         :param filename:
         :return:
         """
-        with open(filename, "w") as f:
+        with open(filename, "w", encoding="utf-8") as f:
             f.write(json.dumps(dicts, ensure_ascii=False, indent=3))
             print("写入[%s]文件完成..." % filename)
 
@@ -103,9 +103,6 @@ class EntityExtraction():
             for pos in self.analys_pos[function_name]:
                 contents.append(item[pos])
             ans = function(contents, index)
-            if ans == 0:
-                print(str(index) + "\n" + str(item))
-                break
             anss.append(ans)
         print(function_name + ' has completed!')
         return anss
@@ -171,15 +168,14 @@ class EntityExtraction():
         self.dict['LASJ'] = self.test_task(self.extract_lasj, 'extract_lasj')
 
      # MrYx
-        self.dict['PJSJ'] = self.test_task2(self.extract_pjsj, 'extract_pjsj')
-        self.dict['SADQ'] = self.test_task2(self.extract_sadq, 'extract_sadq')
-        self.dict['SASJ'] = self.test_task2(self.extract_sasj, 'extract_sasj')
-        self.dict['SAJE'] = self.test_task2(self.extract_saje, 'extract_saje')
+     #    self.dict['PJSJ'] = self.test_task2(self.extract_pjsj, 'extract_pjsj')
+     #    self.dict['SADQ'] = self.test_task2(self.extract_sadq, 'extract_sadq')
+     #    self.dict['SASJ'] = self.test_task2(self.extract_sasj, 'extract_sasj')
+     #    self.dict['SAJE'] = self.test_task2(self.extract_saje, 'extract_saje')
 
         caseinfo = {}
-        dict_key_order = ['PJSJ','SADQ', 'SASJ', 'SAJE']
+        # dict_key_order = ['PJSJ','SADQ', 'SASJ', 'SAJE']
 
-        ans = []
         dict_key_order = ['AJXZ', 'AJLX', 'TOP_UNITCODE', 'UNITCODE', 'HYLY_XH', 'HYLY_SH', 'SAHJ', 'AFCS', 'LASJ']
 
         cnt = 2
@@ -230,12 +226,15 @@ class EntityExtraction():
         if len(content) == 0:
             return "", ""
         for organization in self.organizations:
-            if content.__contains__(organization["NAME"]):
-                return organization["ID"], organization["PARENT_ID"]
-            if content.__contains__(organization["SHORT_NAME"]):
-                return organization["ID"], organization["PARENT_ID"]
-            if content.__contains__(organization["ALIAS"]):
-                return organization["ID"], organization["PARENT_ID"]
+            if len(organization["NAME"]) > 2:
+                if content.__contains__(organization["NAME"]):
+                    return organization["ID"], organization["PARENT_ID"]
+            if len(organization["SHORT_NAME"]) > 2:
+                if content.__contains__(organization["SHORT_NAME"]):
+                    return organization["ID"], organization["PARENT_ID"]
+            if len(organization["ALIAS"]) > 2:
+                if content.__contains__(organization["ALIAS"]):
+                    return organization["ID"], organization["PARENT_ID"]
         return "", ""
 
 

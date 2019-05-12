@@ -1,3 +1,3 @@
 *.xlsx
-.idea
-lib
+/.idea/
+/lib/
