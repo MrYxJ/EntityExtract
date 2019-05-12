@@ -7,5 +7,19 @@
 
 # combineJson.py
 合并```caseinfo.json```和```personinfo.json```生成```save.json```.
+json格式：
+```
+{
+   "2": {
+      "personinfo": [
+         {
+           
+         }
+      ],
+      "caseinfo": {
+      }
+   },
+}
+```
 
 # import.py
