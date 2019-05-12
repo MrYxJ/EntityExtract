@@ -15,11 +15,11 @@ class EntityExtraction():
         self.analys_pos = {
             'extract_ajxz': ['案由'],   #可能从多个不同部分提取，所以用List
             'extract_ajlx': ['当事人', '判决结果', '庭审过程'],
-            'extract_unitcode_and_top': ['法院'],
-            'extract_hyly':['案由', '庭审过程'],
-            'extract_sahj':['庭审过程'],
-            'extract_afcs':['庭审过程'],
-            'extract_lasj':['庭审过程']
+            'extract_unitcode_and_top': ['原告'],
+            'extract_hyly': ['案由', '庭审过程'],
+            'extract_sahj': ['庭审过程'],
+            'extract_afcs': ['庭审过程'],
+            'extract_lasj': ['庭审过程']
         }
         self.dict = {}
 
@@ -124,16 +124,18 @@ class EntityExtraction():
         :return:
         '''
         print('input: ', self.input_file)
-        # self.dict['AJXZ'] = self.test_task(self.extract_ajxz, 'extract_ajxz')
-        # self.dict['AJLX'] = self.test_task(self.extract_ajlx, 'extract_ajlx')
-        # self.dict['TOP_UNITCODE'], self.dict['UNITCODE'] = self.test_task_duo(self.extract_unitcode_and_top, 'extract_unitcode_and_top')
-        # self.dict['HYLY'] = self.test_task(self.extract_hyly, 'extract_hyly')
+        self.dict['AJXZ'] = self.test_task(self.extract_ajxz, 'extract_ajxz')
+        self.dict['AJLX'] = self.test_task(self.extract_ajlx, 'extract_ajlx')
+        self.dict['TOP_UNITCODE'], self.dict['UNITCODE'] = self.test_task_duo(self.extract_unitcode_and_top, 'extract_unitcode_and_top')
+        self.dict['HYLY_XH'], self.dict['HYLY_SH'] = self.test_task_duo(self.extract_hyly, 'extract_hyly')
+        self.dict['SAHJ'] = self.test_task(self.extract_sahj, 'extract_sahj')
+        self.dict['AFCS'] = self.test_task(self.extract_afcs, 'extract_afcs')
         self.dict['LASJ'] = self.test_task(self.extract_lasj, 'extract_lasj')
 
         #...............
 
         ans = []
-        dict_key_order = ['LASJ']
+        dict_key_order = ['AJXZ', 'AJLX', 'TOP_UNITCODE', 'UNITCODE', 'HYLY_XH', 'HYLY_SH', 'SAHJ', 'AFCS', 'LASJ']
 
         for i in range(len(self.all_items)):
             item = {}
@@ -143,8 +145,27 @@ class EntityExtraction():
             ans.append(item)
         self.write_dict_to_json(dicts=ans, filename=result_file)
 
-    def extract_ajxz(self, content, id): # id为第几个item索引
-        return [content]
+    def extract_ajxz(self, contents, id): # id为第几个item索引
+        re = set()
+        for content in contents:
+            parts = content.split("、")
+            for part in parts:
+                if part == "单位行贿" or part == "单位行贿罪":
+                    re.add(1)
+                elif part == "对单位行贿" or part == "对单位行贿罪":
+                    re.add(2)
+                elif part == "介绍贿赂" or part == "介绍贿赂罪":
+                    re.add(3)
+                elif part == "行贿" or part == "行贿罪":
+                    re.add(4)
+                elif part == "受贿" or part == "受贿罪":
+                    re.add(5)
+                elif part == "利用影响力受贿" or part == "利用影响力受贿罪":
+                    re.add(6)
+            if len(re) == 0:
+                for part in parts:
+                    re.add(part)
+        return list(re)
 
     def extract_ajlx(self, contents, id):
         re = 0
@@ -156,7 +177,27 @@ class EntityExtraction():
         return re
 
     def extract_unitcode_and_top(self, contents, id):
-    #     根据省市县表，来查最长匹配
+        content = contents[0]
+        if len(content) == 0:
+            return "", ""
+        for organization in self.organizations:
+            if content.__contains__(organization["NAME"]):
+                return organization["ID"], organization["PARENT_ID"]
+            if content.__contains__(organization["SHORT_NAME"]):
+                return organization["ID"], organization["PARENT_ID"]
+            if content.__contains__(organization["ALIAS"]):
+                return organization["ID"], organization["PARENT_ID"]
+        return "", ""
+
+
+    def extract_unitcode_and_top_location(self, contents, id):
+        """
+        现已不用，因为发现unitcode是应该参照organization表而不是地址
+        根据省市县表，来查最长匹配
+        :param contents:
+        :param id:
+        :return:
+        """
         for content in contents:
     #         实际上就一个
             if len(content) == 0:
@@ -190,36 +231,55 @@ class EntityExtraction():
             for content in contents:
                 if content.__contains__("贿赂"):
                     count = 11
-        ans = ""
+        xh = sh = 0
         if (count%10) == 1:
-            ans = ans + "行贿"
+            xh = 1
         if (count/10) == 1:
-            ans = ans + "受贿"
-        return ans
+            sh = 1
+        return xh, sh
 
     def extract_sahj(self, contents, index):
-        return content[0]
+        candidates = {"行政审批": ["审批同意", "签字审批", "利用审批", "利用其审批"], "招标投标": ["招标", "投标", "顺利中标"],
+                      "组织人事": ["提干款"], "行政执法": [], "司法活动": ["枉法"], "日常经营":["订货", "销售", "购进", "采购", "购入"],
+                      "贸易活动": ["贸易"], "薪资管理": ["工资", "津贴", "加班费", "提成", "薪酬"], "工程承揽":[],
+                      "物资采购": ["采购", "购入", "购进", "订货"], "公司设立变更":["公司变更"]}
+        regex_candidates = {"资金拨付": ["款.{0,20}拨付","拨付.{0,20}款"], "组织人事": ["(帮(助|忙)|解决|关照).{0,10}(调动|选拔|提级|提干)"],
+                      "行政执法": ["执法.{0,10}(招呼|关照)"], "财务管理": ["其.{0,10}保管]"], "产品生产":["生产.{0,20}(吨|件|个|千克|亩)"],
+                      "工程承揽": ["工程.{0,10}承(包|揽)", "承(包|揽).{0,10}工程"]}
+        ans = set()
+        for content in contents:
+            for candidate in candidates:
+                for pattern in candidates[candidate]:
+                    if content.__contains__(pattern):
+                        ans.add(candidate)
+            for regex_candidate in regex_candidates:
+                for pattern in regex_candidates[regex_candidate]:
+                    if re.match(pattern, content):
+                        ans.add(regex_candidate)
+        if len(ans) == 0:
+            ans.add("其他")
+        return list(ans)
 
     def extract_afcs(self, contents, index):
-        #     根据省市县表，来查最长匹配
+        """
+        根据数据库中的AFCS的值来检索
+        :param contents:
+        :param index:
+        :return:
+        """
+        candidates = {"KTV": ["KTV", "卡拉OK"], "COFFEE": ["咖啡馆", "咖啡厅", "Coffee", "COFFEE"],
+                      "酒吧": ["酒吧", "Bar", "Pub"], "办公室": ["办公室"], "广场": ["广场"], "宾馆": ["宾馆", "酒店",
+                      "旅店", "旅馆"], "洗浴中心": ["洗浴中心"], "直接电话": ["电话", "手机"], "交通工具": ["车内",
+                      "火车", "高铁", "飞机", "公交车", "公交", "地铁", "轻轨", "电车"]}
+        ans = set()
         for content in contents:
-            #         实际上就一个
-            if len(content) == 0:
-                return "", ""
-            for country in self.country2city:
-                if content.__contains__(country):
-                    return self.city2province[self.country2city[country]], self.city2province[
-                        self.country2city[country]] + self.country2city[country] + country
-            for city in self.city2province:
-                if content.__contains__(city):
-                    return self.city2province[city], self.city2province[city] + city
-                if city.endswith("市"):
-                    if content.__contains__(city[:-1]):
-                        return self.city2province[city], self.city2province[city] + city
-            for province in self.province_list:
-                if content.__contains__(province):
-                    return province, province
-        return "", ""
+            for candidate in candidates:
+                for pattern in candidates[candidate]:
+                    if content.__contains__(pattern):
+                        ans.add(candidate)
+        if len(ans) == 0:
+            ans.add("其他")
+        return list(ans)
 
     def extract_lasj(self, contents, index):
         pattern = "[0-9]+年[0-9]+月[0-9]+日"
@@ -243,6 +303,7 @@ class EntityExtraction():
 
 
     def load_china_regions(self):
+        # 手动识别地址
         self.province_list = []
         self.country2city = {}
         self.city2province = {}
@@ -266,6 +327,11 @@ class EntityExtraction():
             for country in countries[city_code]:
                 self.country2city[country['name']] = code2city[city_code]
 
+        # pub_organization表
+        organization_file = open("lib/pub_organization.json", "r", encoding="utf-8")
+        self.organizations = json.load(organization_file)
+
+
     def test_method(self):
         for index, item in enumerate(self.all_items):
             if self.extract_ajlx(item, index) == 0:
@@ -277,7 +343,7 @@ class EntityExtraction():
 
 if __name__ == '__main__':
     ee = EntityExtraction()
-    # ee.load_china_regions()
+    ee.load_china_regions()
     print(ee.all_items[0]['案由'])
     ee.test_total('unitcode.json')
     # ee.test_method()
