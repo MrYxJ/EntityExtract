@@ -22,7 +22,7 @@ class EntityExtraction():
             'extract_ajxz': ['案由'],   #可能从多个不同部分提取，所以用List
             'extract_ajlx': ['当事人', '判决结果', '庭审过程'],
             'extract_unitcode_and_top': ['原告'],
-            'extract_hyly': ['案由', '庭审过程'],
+            'extract_hyly': ['案号'],
             'extract_sahj': ['庭审过程'],
             'extract_afcs': ['庭审过程'],
             'extract_lasj': ['庭审过程'],
@@ -33,7 +33,7 @@ class EntityExtraction():
             'extract_aqzy':['庭审过程'],
         }
         self.dict = {}
-        self.load_china_regions()
+        self.load_libs()
 
     def xlsx_to_dict(self, filename):
         """
@@ -194,19 +194,19 @@ class EntityExtraction():
         re = set()
         for content in contents:
             parts = content.split("、")
-            for part in parts:
-                if part == "单位行贿" or part == "单位行贿罪":
-                    re.add(1)
-                elif part == "对单位行贿" or part == "对单位行贿罪":
-                    re.add(2)
-                elif part == "介绍贿赂" or part == "介绍贿赂罪":
-                    re.add(3)
-                elif part == "行贿" or part == "行贿罪":
-                    re.add(4)
-                elif part == "受贿" or part == "受贿罪":
-                    re.add(5)
-                elif part == "利用影响力受贿" or part == "利用影响力受贿罪":
-                    re.add(6)
+            # for part in parts:
+            #     if part == "单位行贿" or part == "单位行贿罪":
+            #         re.add(1)
+            #     elif part == "对单位行贿" or part == "对单位行贿罪":
+            #         re.add(2)
+            #     elif part == "介绍贿赂" or part == "介绍贿赂罪":
+            #         re.add(3)
+            #     elif part == "行贿" or part == "行贿罪":
+            #         re.add(4)
+            #     elif part == "受贿" or part == "受贿罪":
+            #         re.add(5)
+            #     elif part == "利用影响力受贿" or part == "利用影响力受贿罪":
+            #         re.add(6)
             if len(re) == 0:
                 for part in parts:
                     re.add(part)
@@ -266,24 +266,12 @@ class EntityExtraction():
 
     def extract_hyly(self, contents, index):
         count = 0
+        xh = sh = "其他"
         for content in contents:
-            if count == 11:
-                break
-            if (count%10) == 0:
-                if content.__contains__("行贿"):
-                    count = count + 1
-            if (count/10) == 0:
-                if content.__contains__("受贿"):
-                    count = count + 10
-        if count == 0:
-            for content in contents:
-                if content.__contains__("贿赂"):
-                    count = 11
-        xh = sh = 0
-        if (count%10) == 1:
-            xh = 1
-        if (count/10) == 1:
-            sh = 1
+            if self.hyly_sh_table.__contains__(content):
+                sh = self.hyly_sh_table[content]
+            if self.hyly_xh_table.__contains__(content):
+                xh = self.hyly_xh_table[content]
         return xh, sh
 
     def extract_sahj(self, contents, index):
@@ -350,7 +338,7 @@ class EntityExtraction():
         return lasj
 
 
-    def load_china_regions(self):
+    def load_libs(self):
         # 手动识别地址
         self.province_list = []
         self.country2city = {}
@@ -378,6 +366,10 @@ class EntityExtraction():
         # pub_organization表
         organization_file = open("lib/pub_organization.json", "r", encoding="utf-8")
         self.organizations = json.load(organization_file)
+        hyly_xh_file = open("lib/hyly_xh.json", "r", encoding="utf-8")
+        hyly_sh_file = open("lib/hyly_sh.json", "r", encoding="utf-8")
+        self.hyly_xh_table = json.load(hyly_xh_file)
+        self.hyly_sh_table = json.load(hyly_sh_file)
 
 
     def test_method(self):
