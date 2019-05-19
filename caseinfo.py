@@ -269,9 +269,9 @@ class EntityExtraction():
         xh = sh = "其他"
         for content in contents:
             if self.hyly_sh_table.__contains__(content):
-                sh = self.hyly_sh_table[content]
+                sh = self.hyly_sh_table[content]['type']
             if self.hyly_xh_table.__contains__(content):
-                xh = self.hyly_xh_table[content]
+                xh = self.hyly_xh_table[content]['type']
         return xh, sh
 
     def extract_sahj(self, contents, index):
