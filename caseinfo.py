@@ -8,6 +8,8 @@ import jieba.posseg as pseg
 import io
 import sys
 import cpca
+
+import pymysql
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
 
 class EntityExtraction():
@@ -34,6 +36,7 @@ class EntityExtraction():
         }
         self.dict = {}
         self.load_libs()
+        self.cursor = self.get_mysql()
 
     def xlsx_to_dict(self, filename):
         """
@@ -391,14 +394,35 @@ class EntityExtraction():
         retList = []
         contentList = [content]
         szdq = cpca.transform(contentList)
-        #print(szdq['省'].tolist())
         if content == szdq['地址'].tolist()[0] or (len(content) > len(szdq['省'].tolist()[0]) and szdq['市'].tolist()[0] == ''):
             szdq = cpca.transform(contentList, cut=False)
         retList += szdq['省'].tolist()
         retList += szdq['市'].tolist()
         retList += szdq['区'].tolist()
-        #print(retList)
-        return retList
+        #print(content, ' :' , retList)
+        sql = " select CODE from pub_code_item where CODE_TYPE_NO = 'ADMINISTRATIVE_AREA' and  CODE_NAME = '%s' "
+        full_name  = retList[0] + retList[1] + retList[2]
+        if full_name == '':
+            if '县' in content : full_name = content[0:content.index('县')+1]
+            elif '区' in content: full_name = content[0:content.index('区')+1]
+        if retList[0] == '内蒙古自治区': retList[0] = '内蒙古区'
+        if retList[0] == '新疆维吾尔自治区': retList[0] = '新疆区'
+        if retList[0] == '广西壮族自治区': retList[0] = '广西区'
+        if retList[0] == '西藏自治区': retList[0] = '西藏区'
+        if retList[0] == '宁夏回族自治区': retList[0] = '宁夏区'
+
+        if retList[0] != '' and retList[0] == retList[1] : full_name = retList[1] + retList[2]
+        LIST = [full_name, retList[2],retList[1],retList[0]]
+        if retList[1] != '' and retList[1][-1] == '市' :  LIST = [full_name, retList[2],retList[1],retList[1][0:-1], retList[0]]
+        for pos in LIST:
+            sqls = sql % pos
+            self.cursor.execute(sqls)
+            if self.cursor.rowcount!=0:
+                    ans = self.cursor.fetchall()
+                    #print('ans:',ans[0][0])
+                    return ans[0][0]
+        #sprint(content, ' :' , retList)
+        return ''
 
     def extract_sasj(self,content, id):
         """
@@ -476,6 +500,11 @@ class EntityExtraction():
                     break
             if Find: break
         return transmit(ans)
+	
+    def get_mysql(self):
+        db = pymysql.connect(host="172.16.216.161", user="law", password="cistLAW1104", database="law", charset="utf8")
+        cursor = db.cursor()
+        return cursor
 
 if __name__ == '__main__':
     ee = EntityExtraction()
