@@ -5,7 +5,6 @@ Created on Tue Mar 12 19:01:23 2019
 @author: bnuzgn
 """
 import re
-import os
 import json
 import xlrd
 import cpca 
@@ -240,8 +239,6 @@ def extract_szdq(content):
     retList += szdq['市'].tolist()
     retList += szdq['区'].tolist()
     return retList
-    
-
 
 def extract_xzz(content):
     retList = ''
