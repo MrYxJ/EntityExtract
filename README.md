@@ -5,8 +5,11 @@
 # personinfo.py  
 生成```personinfo.json```
 
+# unitinfo.py  
+生成```unitinfo.json```
+
 # combineJson.py
-合并```caseinfo.json```和```personinfo.json```生成```save.json```.
+合并```caseinfo.json```, ```personinfo.json```,```unitinfo.json```生成```save.json```.
 json格式：
 ```
 {
