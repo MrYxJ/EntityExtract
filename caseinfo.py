@@ -3,12 +3,10 @@
 # Author MrYx
 # @Time: 2019/5/6 16:53
 
-import json, re, xlrd , datetime, sys
-import jieba.posseg as pseg
+import json, re, xlrd , datetime, sys,time
 import io
 import sys
 import cpca
-
 import pymysql
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
 
@@ -118,15 +116,16 @@ class EntityExtraction():
         :return:
         """
         anss = []
+        t1 = time.time()
         for index, item in enumerate(self.all_items):
-            ans = None
+            ans = ''
             for pos in self.analys_pos[function_name]:
+                if item[pos] == '': continue
                 ans = function(item[pos], index)
-                if ans != [] :
-                    anss.append(ans)
-                    break
-            if ans == []: anss.append([])
-        print(function_name + ' has completed!')
+                if ans != [] : break
+            anss.append(ans)
+            print('ans:',ans)
+        print('Cost [%s]\'s [%s]  has completed!'% (time.time() -t1 , function_name))
         return anss
 
     def test_task_duo(self,function, function_name):
@@ -240,7 +239,6 @@ class EntityExtraction():
                     return organization["ID"], organization["PARENT_ID"]
         return "", ""
 
-
     def extract_unitcode_and_top_location(self, contents, id):
         """
         现已不用，因为发现unitcode是应该参照organization表而不是地址
@@ -340,7 +338,6 @@ class EntityExtraction():
                         return lasj
         return lasj
 
-
     def load_libs(self):
         # 手动识别地址
         self.province_list = []
@@ -373,7 +370,6 @@ class EntityExtraction():
         hyly_sh_file = open("lib/hyly_sh.json", "r", encoding="utf-8")
         self.hyly_xh_table = json.load(hyly_xh_file)
         self.hyly_sh_table = json.load(hyly_sh_file)
-
 
     def test_method(self):
         for index, item in enumerate(self.all_items):
