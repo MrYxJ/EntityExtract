@@ -9,8 +9,14 @@ import io
 import sys
 import cpca
 
-import pymysql
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
+# import pymysql
+from pyhanlp import HanLP
+
+
+
+
+# sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
+NER = HanLP.newSegment().enableNameRecognize(True)
 
 class EntityExtraction():
     def __init__(self):
@@ -24,7 +30,7 @@ class EntityExtraction():
             'extract_ajxz': ['案由'],   #可能从多个不同部分提取，所以用List
             'extract_ajlx': ['当事人', '判决结果', '庭审过程'],
             'extract_unitcode_and_top': ['原告'],
-            'extract_hyly': ['案号'],
+            'extract_hyly': ['案由','庭审过程','法院意见'],
             'extract_sahj': ['庭审过程'],
             'extract_afcs': ['庭审过程'],
             'extract_lasj': ['庭审过程'],
@@ -33,10 +39,11 @@ class EntityExtraction():
             'extract_sasj':['庭审过程'],
             'extract_saje':['庭审过程'],
             'extract_aqzy':['庭审过程'],
+            'extract_fr':['庭审过程', '法院意见', '案由']
         }
         self.dict = {}
-        self.load_libs()
-        self.cursor = self.get_mysql()
+        # self.load_libs()
+        # self.cursor = self.get_mysql()
 
     def xlsx_to_dict(self, filename):
         """
@@ -44,6 +51,7 @@ class EntityExtraction():
         :param filename: xlsx的文件路径
         :return:
         """
+        print("Loading")
         try:
             file = xlrd.open_workbook(filename)
         except:
@@ -68,6 +76,7 @@ class EntityExtraction():
                     value = table.cell_value(pos_i, pos_j)
                 dict[dict_name[pos_j]] = value
             dicts.append(dict)
+        print("OpenLaw loaded")
         return dicts
 
     def write_dict_to_json(self, dicts, filename):
@@ -155,6 +164,56 @@ class EntityExtraction():
         print(function_name + ' has completed!')
         return anss_1, anss_2
 
+    def test_task_tri(self,function, function_name):
+        """
+        测试单个任务结果
+        :param function:
+        :param function_name:
+        :return:
+        """
+        anss_1 = []
+        anss_2 = []
+        anss_3 = []
+        for index, item in enumerate(self.all_items):
+            if index % 10000 == 0:
+                print(index)
+            ans = None
+            contents = []
+            for pos in self.analys_pos[function_name]:
+                contents.append(item[pos])
+            ans_1, ans_2, ans_3 = function(contents, index)
+            anss_1.append(ans_1)
+            anss_2.append(ans_2)
+            anss_3.append(ans_3)
+        print(function_name + ' has completed!')
+        return anss_1, anss_2, anss_3
+
+    def test_task_4(self,function, function_name):
+        """
+        测试单个任务结果
+        :param function:
+        :param function_name:
+        :return:
+        """
+        anss_1 = []
+        anss_2 = []
+        anss_3 = []
+        anss_4 = []
+        for index, item in enumerate(self.all_items):
+            if index % 10000 == 0:
+                print(index)
+            ans = None
+            contents = []
+            for pos in self.analys_pos[function_name]:
+                contents.append(item[pos])
+            ans_1, ans_2, ans_3, ans_4 = function(contents, index)
+            anss_1.append(ans_1)
+            anss_2.append(ans_2)
+            anss_3.append(ans_3)
+            anss_4.append(ans_4)
+        print(function_name + ' has completed!')
+        return anss_1, anss_2, anss_3, anss_4
+
     def test_total(self):
         '''
         最后运行的程序
@@ -162,24 +221,26 @@ class EntityExtraction():
         :return:
         '''
         print('input: ', self.input_file)
-        self.dict['AJXZ'] = self.test_task(self.extract_ajxz, 'extract_ajxz')
-        self.dict['AJLX'] = self.test_task(self.extract_ajlx, 'extract_ajlx')
-        self.dict['TOP_UNITCODE'], self.dict['UNITCODE'] = self.test_task_duo(self.extract_unitcode_and_top, 'extract_unitcode_and_top')
-        self.dict['HYLY_XH'], self.dict['HYLY_SH'] = self.test_task_duo(self.extract_hyly, 'extract_hyly')
-        self.dict['SAHJ'] = self.test_task(self.extract_sahj, 'extract_sahj')
-        self.dict['AFCS'] = self.test_task(self.extract_afcs, 'extract_afcs')
-        self.dict['LASJ'] = self.test_task(self.extract_lasj, 'extract_lasj')
-
-     # MrYx
-        self.dict['PJSJ'] = self.test_task2(self.extract_pjsj, 'extract_pjsj')
-        self.dict['SADQ'] = self.test_task2(self.extract_sadq, 'extract_sadq')
-        self.dict['SASJ'] = self.test_task2(self.extract_sasj, 'extract_sasj')
-        self.dict['SAJE'] = self.test_task2(self.extract_saje, 'extract_saje')
+     #    self.dict['AJXZ'] = self.test_task(self.extract_ajxz, 'extract_ajxz')
+     #    self.dict['AJLX'] = self.test_task(self.extract_ajlx, 'extract_ajlx')
+     #    self.dict['UNITCODE'], self.dict['TOP_UNITCODE'] = self.test_task_duo(self.extract_unitcode_and_top, 'extract_unitcode_and_top')
+        self.dict['IF_XH'], self.dict['IF_SH'], self.dict['HYLY_XH'], self.dict['HYLY_SH'] = self.test_task_4(self.extract_hyly, 'extract_hyly')
+     #    self.dict['SAHJ'] = self.test_task(self.extract_sahj, 'extract_sahj')
+     #    self.dict['AFCS'] = self.test_task(self.extract_afcs, 'extract_afcs')
+     #    self.dict['LASJ'] = self.test_task(self.extract_lasj, 'extract_lasj')
+     #    self.dict['FRXM'], self.dict['FRSA'], self.dict['UNITTYPE'] = self.test_task_tri(self.extract_fr, 'extract_fr')
+     # # MrYx
+     #    self.dict['PJSJ'] = self.test_task2(self.extract_pjsj, 'extract_pjsj')
+     #    self.dict['SADQ'] = self.test_task2(self.extract_sadq, 'extract_sadq')
+     #    self.dict['SASJ'] = self.test_task2(self.extract_sasj, 'extract_sasj')
+     #    self.dict['SAJE'] = self.test_task2(self.extract_saje, 'extract_saje')
 
         caseinfo = {}
 
-        dict_key_order = ['AJXZ', 'AJLX', 'TOP_UNITCODE', 'UNITCODE', 'HYLY_XH', 'HYLY_SH', 'SAHJ', 'AFCS', 'LASJ',
-                          'PJSJ','SADQ', 'SASJ', 'SAJE']
+        # dict_key_order = ['AJXZ', 'AJLX', 'TOP_UNITCODE', 'UNITCODE', 'HYLY_XH', 'HYLY_SH', 'SAHJ', 'AFCS', 'LASJ',
+        #                   'PJSJ','SADQ', 'SASJ', 'SAJE']
+        # dict_key_order = ['FRXM', 'FRSA', 'UNITTYPE']
+        dict_key_order = ['IF_XH', 'IF_SH', 'HYLY_XH', 'HYLY_SH']
 
         cnt = 2
         for i in range(len(self.all_items)):
@@ -268,14 +329,97 @@ class EntityExtraction():
         return "", ""
 
     def extract_hyly(self, contents, index):
-        count = 0
-        xh = sh = "其他"
-        for content in contents:
-            if self.hyly_sh_table.__contains__(content):
-                sh = self.hyly_sh_table[content]['type']
-            if self.hyly_xh_table.__contains__(content):
-                xh = self.hyly_xh_table[content]['type']
-        return xh, sh
+        pattern_sh = {'1':['国有企业'],'2':['办事处','人大代表','人民政府','村委会'],'4':['国有事业'],'5':['党委会']}
+        regex_sh = {'3':['(贷款|金融|基金).{0,100}(收受|索取).{0,100}元']}
+        pattern_xh = {'a':['种植','农经站','林业站','畜牧站','机械化推广','苗圃','养殖','试验','配种','土肥','植物'],
+                      'b':['开采','铝矾土','煤','钻石','铁','稀有金属','铅','石灰石','镍','磷','岩盐','锡','铀','钼','石油','天然气'],
+                      'c':['制造','机械','车间'],
+                      'd':['电力','燃气','发电','水利','电力','能源'],
+                      'f':['交通运输','邮政局','仓储','物流','道路运输','运管所','客运市场'],
+                      'g':['计算机服务','软件开发'],
+                      'h':[],
+                      'i':[],
+                      'l':['商务服务'],
+                      'm':['科研','技术服务','科学研究','地质勘探'],
+                      'n':['环境保护','公共设施管理','公共设施维修','水利'],
+                      'o':['居民服务'],
+                      'p':['教育','学校','老师','校长','辅导'],
+                      'q':['卫生局','卫生防疫','卫生站','社会福利院','敬老院','疗养院','儿童福利院'],
+                      'r':['文化局','体育局','娱乐场所','卡拉OK','歌舞厅','游艺'],
+                      's':['公共管理','社会组织'],
+                      't':['国际组织']
+                      }
+        regex_xh = {'b':['矿产资源(.{0,100}(送给|行贿).{0,100}元|送钱)'],
+                    'f':['(货运|客运|物流|邮政).{,10}公司'],
+                    'h':['(供货|供应)(.{0,100}(送|行贿).{0,100}元|送钱)'],
+                    'i':['(旅馆|餐饮|宾馆|住宿|酒店|饭店)(.{0,100}(送|行贿).{0,100}元|送钱)'],
+                    'k':['房地产(.{0,100}(送|行贿).{0,100}元|送钱)'],
+                    'l': ['租赁(.{0,100}(送|行贿).{0,100}元|送钱)']}
+        # contents[0] 案由
+        # contetns[1] 庭审过程
+        # contents[2] 法院意见
+        xh = False
+        sh = False
+        hyly_sh = hyly_xh = ''
+        # xh = sh = "其他"
+        parts = contents[0].split("、")
+        for part in parts:
+            if part.__contains__("贿"):
+                if not xh:
+                    if part.__contains__("行"):
+                        xh = True
+                if not sh:
+                    if part.__contains__("受"):
+                        sh = True
+                if sh and xh:
+                    break
+        count = {}
+        if sh:
+            hyly_sh = 6
+            for item in regex_sh:
+                for pattern in regex_sh[item]:
+                    if re.match(pattern, contents[1]):
+                        hyly_sh = item
+                        break
+                    if re.match(pattern, contents[2]):
+                        hyly_sh = item
+                        break
+                if hyly_sh != 6:
+                    break
+            if hyly_sh == 6:
+                for item in pattern_sh:
+                    count[item] = 0
+                    for pattern in pattern_sh[item]:
+                        count[item] += len(self.locate_str(contents[1], pattern) + self.locate_str(contents[2], pattern))
+                max = 0
+                for item in count:
+                    if count[item] > max:
+                        hyly_sh = item
+                        max = count[item]
+                count.clear()
+        if xh:
+            hyly_xh = 'z'
+            for item in regex_xh:
+                for pattern in regex_xh[item]:
+                    if re.match(pattern, contents[1]):
+                        hyly_xh = item
+                        break
+                    if re.match(pattern, contents[2]):
+                        hyly_xh = item
+                        break
+                if hyly_xh != 'z':
+                    break
+            if hyly_xh == 'z':
+                for item in pattern_xh:
+                    count[item] = 0
+                    for pattern in pattern_xh[item]:
+                        count[item] += len(self.locate_str(contents[1], pattern) + self.locate_str(contents[2], pattern))
+                max = 0
+                for item in count:
+                    if count[item] > max:
+                        hyly_xh = item
+                        max = count[item]
+        return xh, sh, hyly_xh, hyly_sh
 
     def extract_sahj(self, contents, index):
         candidates = {"行政审批": ["审批同意", "签字审批", "利用审批", "利用其审批"], "招标投标": ["招标", "投标", "顺利中标"],
@@ -319,6 +463,100 @@ class EntityExtraction():
         if len(ans) == 0:
             ans.add("其他")
         return list(ans)
+
+    @staticmethod
+    def locate_str(line, part):
+        re = []
+        tmp = line
+        base = 0
+        index = tmp.find(part)
+        while index != -1:
+            re.append(index + base)
+            tmp = tmp[index+1:]
+            index = tmp.find(part)
+            base = base + index + 1
+        return re
+
+    def extract_fr(self, contents, index):
+        """
+        content[0] 庭审过程
+        content[1] 法院意见
+        content[2] 案由
+        :param contents:
+        :param index:
+        :return:
+        """
+        frxm = ""
+        frsa = 0
+        unittype = 0
+    #     TODO 识别法人
+        name_list = []
+    #     判断是否被告
+        for content in contents:
+            indexs = self.locate_str(content, "法定代表人")
+            for index in indexs:
+                line = content[max(0, index - 100):index+100]
+                parts = NER.seg(line)
+                potential = []
+                for part in parts:
+                    if part.nature.name == 'nr':
+                        name = re.sub("\s", "", part.word)
+                        name = re.sub("[A-Za-z]", "", name)
+                        if len(name) < 2:
+                            continue
+                        potential.append(name)
+                min_distance = 101
+                related_name = ""
+                for name in potential:
+                    name_indexs = self.locate_str(line, name)
+                    for name_index in name_indexs:
+                        if name_index < 100:
+                            distance = 100 - name_index
+                        else:
+                            distance = name_index - 100
+                        if distance < min_distance:
+                            related_name = name
+                            min_distance = distance
+                    if min_distance == 101:
+                        print("Unexpected!")
+                        print(line)
+                        print(name)
+                    else:
+                        name_list.append(related_name)
+        patterns = []
+        for name in name_list:
+            patterns.append("被告人" + name)
+        for i in range(len(patterns)):
+            for content in contents:
+                if content.__contains__(patterns[i]):
+                    frxm = name_list[i]
+                    frsa = 1
+                    break
+            if frsa != 0:
+                break
+        # print(name_list)
+        if frsa == 0 and len(name_list) > 0:
+            frxm = name_list[0]
+            frsa = 2
+        if frsa == 0:
+            return frxm, frsa, unittype
+        xh_count = 0
+        sh_count = 0
+        for content in contents:
+            indexes = self.locate_str(content, frxm)
+            for index in indexes:
+                line = content[min(0, index - 20):index + 20]
+                indexes_xh = self.locate_str(line, "行贿")
+                indexes_sh = self.locate_str(line, "受贿")
+                xh_count = xh_count + len(indexes_xh)
+                sh_count = sh_count + len(indexes_sh)
+        if xh_count == 0 and sh_count == 0:
+            return frxm, frsa, unittype
+        if xh_count >= sh_count:
+            unittype = 1
+        elif sh_count > xh_count:
+            unittype = 2
+        return frxm, frsa, unittype
 
     def extract_lasj(self, contents, index):
         pattern = "[0-9]+年[0-9]+月[0-9]+日"
@@ -369,10 +607,11 @@ class EntityExtraction():
         # pub_organization表
         organization_file = open("lib/pub_organization.json", "r", encoding="utf-8")
         self.organizations = json.load(organization_file)
-        hyly_xh_file = open("lib/hyly_xh.json", "r", encoding="utf-8")
-        hyly_sh_file = open("lib/hyly_sh.json", "r", encoding="utf-8")
-        self.hyly_xh_table = json.load(hyly_xh_file)
-        self.hyly_sh_table = json.load(hyly_sh_file)
+        # 不再使用elastic search对行业领域的判断，转而手写正则
+        # hyly_xh_file = open("lib/hyly_xh.json", "r", encoding="utf-8")
+        # hyly_sh_file = open("lib/hyly_sh.json", "r", encoding="utf-8")
+        # self.hyly_xh_table = json.load(hyly_xh_file)
+        # self.hyly_sh_table = json.load(hyly_sh_file)
 
 
     def test_method(self):
